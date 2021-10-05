@@ -19,7 +19,7 @@ namespace Tetris // Note: actual namespace depends on the project name.
          
         static Random random = new Random(10);
 
-        static Tetrominoe current = new Tetrominoe(ShapeType.L);
+        static Tetrominoe current = new Tetrominoe(ShapeType.Square);
 
         static bool canHold = true;
 
@@ -63,7 +63,7 @@ namespace Tetris // Note: actual namespace depends on the project name.
                 new WindowsInput.InputSimulator().Keyboard.KeyDown(WindowsInput.Native.VirtualKeyCode.VK_C);
                 Thread.Sleep(20);
                 new WindowsInput.InputSimulator().Keyboard.KeyUp(WindowsInput.Native.VirtualKeyCode.VK_C);
-                Thread.Sleep(1000);
+                Thread.Sleep(600);
 
                 List<Tetrominoe> tetrominoesQueue = new List<Tetrominoe>();
                 int currentPosition = -1;

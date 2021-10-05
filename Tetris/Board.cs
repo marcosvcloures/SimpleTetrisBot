@@ -12,14 +12,14 @@ namespace Tetris
         private static Dictionary<BigInteger, double> memoization = new Dictionary<BigInteger, double>();
         public Tetrominoe? hold = null;
         public int TotalLinesCleared { get; private set; } = 0;
-        public int Tetris { get; private set; } = 0;
         public int Single { get; private set; } = 0;
         public int Double { get; private set; } = 0;
         public int Triple { get; private set; } = 0;
+        public int Tetris { get; private set; } = 0;
+        public int AllClear { get; private set; } = 0;
 
         private bool[,] matrix = new bool[22, 10];
         public double Objective { get; private set; } = 0.0;
-        public double PonderedLinesCleared { get; private set; } = 0.0;
 
         public Board() { }
 
@@ -32,7 +32,13 @@ namespace Tetris
             hold = other.hold;
 
             TotalLinesCleared = other.TotalLinesCleared;
+
+            Single = other.Single;
+            Double = other.Double;
+            Triple = other.Triple;
             Tetris = other.Tetris;
+
+            AllClear = other.AllClear;
         }
 
         private int getAvaliableLine(Tetrominoe tetrominoe, int startingColumn)
@@ -137,6 +143,15 @@ namespace Tetris
             Triple += linesCleared == 3 ? 1 : 0;
             Double += linesCleared == 2 ? 1 : 0;
             Single += linesCleared == 2 ? 1 : 0;
+
+            if(linesCleared > 0)
+            {
+                for (int j = 0; j < 10; j++)
+                    if (!matrix[21, j])
+                        return;
+
+                AllClear += 1;
+            }
         }
 
         private double calculateStateObjective()
@@ -145,23 +160,25 @@ namespace Tetris
 
             clearLines();
 
-            Objective += Single * -10;
+            Objective += Single * -100;
 
-            Objective += Double * 5;
+            Objective += Double * -80;
 
-            Objective += Triple * 10;
+            Objective += Triple * -60;
 
-            Objective += Tetris * 40;
+            Objective += Tetris * 1000;
 
-            Objective += getBoardHeight() * -1;
+            Objective += AllClear * 20000;
 
-            Objective += countBlocked() * -200;
+            Objective += getBoardHeight() * -500;
 
-            Objective += countPeaks() * -20;
+            Objective += countBlocked() * -2000;
 
-            Objective += contingeneous() * 5;
+            Objective += countPeaks() * -2000;
 
-            Objective += firstColumn() * -10;
+            Objective += nonContingeneous() * -2;
+
+            Objective += firstColumn() * -500;
 
             if (hold.HasValue && hold.Value.Shape == Tetrominoe.ShapeType.Line)
                 Objective += 10;
@@ -183,14 +200,26 @@ namespace Tetris
             return count;
         }
 
-        private int contingeneous()
+        private int nonContingeneous()
         {
             int count = 0;
 
-            for(int i = 0; i < 22; i++)
-                for(int j = 2; j < 10; j++)
-                    if(matrix[i, j - 1] && matrix[i, j])
-                        count++;
+            for (int i = 0; i < 22; i++)
+            {
+                bool valid = false;
+                int empty = 0;
+
+                for (int j = 1; j < 10; j++)
+                {
+                    if (!matrix[i, j])
+                        empty++;
+                    else
+                        valid = true;
+                }
+
+                if (valid)
+                    count += empty;
+            }
 
             return count;
         }
@@ -201,10 +230,10 @@ namespace Tetris
 
             for (int i = 4; i < 22; i++)
             {
-                for (int j = 1; j < 10; j++)
+                for (int j = 2; j < 10; j++)
                 {
                     if (!matrix[i, j] &&
-                         matrix[i - 1, j - 1])
+                         matrix[i - 2, j - 1])
                     {
                         for (int ii = i - 1; ii >= 0; ii--)
                             if (matrix[ii, j - 1])
@@ -217,9 +246,9 @@ namespace Tetris
                 for (int j = 1; j < 9; j++)
                 {
                     if (!matrix[i, j] &&
-                         matrix[i - 1, j + 1])
+                         matrix[i - 2, j + 1])
                     {
-                        for (int ii = i - 1; ii >= 0; ii--)
+                        for (int ii = i - 2; ii >= 0; ii--)
                             if (matrix[ii, j + 1])
                                 count++;
                             else
@@ -235,12 +264,12 @@ namespace Tetris
         {
             int count = 0;
 
-            for (int i = 0; i < 22 - 8; i++)
+            for (int i = 0; i < 22 - 9; i++)
             {
                 for (int j = 0; j < 10; j++)
                 {
                     if (matrix[i, j])
-                        count += (22 - 4 - i) * (22 - 4 - i) * (22 - 4 - i);
+                        count += (22 - 8 - i) * (22 - 8 - i) * (22 - 8 - i);
                 }
             }
 
