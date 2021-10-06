@@ -173,14 +173,13 @@ namespace Tetris
 
             Objective += countBlocked() * -2000;
 
-            Objective += countPeaks() * -2000;
+            Objective += countPeaks() * -100;
 
-            Objective += nonContingeneous() * -2;
+            //Objective += nonContingeneous() * -2;
 
             Objective += firstColumn() * -500;
 
-            if (hold.HasValue && 
-                (hold.Value.Shape == Tetrominoe.ShapeType.Line || hold.Value.Shape == Tetrominoe.ShapeType.T))
+            if (hold.HasValue && hold.Value.Shape == Tetrominoe.ShapeType.T)
                 Objective += 10;
 
             return Objective;
@@ -233,7 +232,7 @@ namespace Tetris
                 for (int j = 2; j < 10; j++)
                 {
                     if (!matrix[i, j] &&
-                         matrix[i - 2, j - 1])
+                         matrix[i - 1, j - 1])
                     {
                         for (int ii = i - 1; ii >= 0; ii--)
                             if (matrix[ii, j - 1])
@@ -246,9 +245,9 @@ namespace Tetris
                 for (int j = 1; j < 9; j++)
                 {
                     if (!matrix[i, j] &&
-                         matrix[i - 2, j + 1])
+                         matrix[i - 1, j + 1])
                     {
-                        for (int ii = i - 2; ii >= 0; ii--)
+                        for (int ii = i - 1; ii >= 0; ii--)
                             if (matrix[ii, j + 1])
                                 count++;
                             else

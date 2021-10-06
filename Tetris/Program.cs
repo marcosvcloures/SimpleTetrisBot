@@ -27,7 +27,7 @@ namespace Tetris // Note: actual namespace depends on the project name.
          
         static Random random = new Random(10);
 
-        static Tetrominoe current = new Tetrominoe(ShapeType.Z);
+        static Tetrominoe current = new Tetrominoe(ShapeType.S);
 
         static bool canHold = true;
 
@@ -130,10 +130,10 @@ namespace Tetris // Note: actual namespace depends on the project name.
 
                     var elapsedMs = watch.ElapsedMilliseconds;
 
-                    int time = 380;
+                    int time = 300;
 
                     if (!canHold)
-                        time = 300;
+                        time = 250;
 
                     if (elapsedMs < time)
                         Thread.Sleep(time - (int) elapsedMs);
@@ -171,7 +171,7 @@ namespace Tetris // Note: actual namespace depends on the project name.
                         }
 
                         // Hold
-                        Thread.Sleep(20);
+                        Thread.Sleep(40);
                         clickMouseAt(460, 840);
                     }
                     else
@@ -219,25 +219,25 @@ namespace Tetris // Note: actual namespace depends on the project name.
                         for (int i = 0; i < rotationPresses; i++)
                         {
                             // Rotate anticlockwise
-                            Thread.Sleep(20);
+                            Thread.Sleep(40);
                             clickMouseAt(420, 910);
                         }
 
                         for (int i = 0; i < leftPresses; i++)
                         {
                             // Move left
-                            Thread.Sleep(20);
+                            Thread.Sleep(40);
                             clickMouseAt(50, 910);
                         }
 
                         for (int i = 0; i < rightPresses; i++)
                         {
                             // Move right
-                            Thread.Sleep(20);
+                            Thread.Sleep(40);
                             clickMouseAt(160, 910);
                         }
 
-                        Thread.Sleep(20);
+                        Thread.Sleep(40);
                         clickMouseAt(110, 850);
 
                         //Console.WriteLine(board.ToString());
@@ -245,14 +245,10 @@ namespace Tetris // Note: actual namespace depends on the project name.
                         // Wait for animations to take place
                         if (board.Single > totalSingles ||
                             board.Double > totalDoubles ||
-                            board.Triple > totalTriples)
+                            board.Triple > totalTriples ||
+                            board.Tetris > totalTetrises)
                         {
                             Thread.Sleep(50);
-                        }
-
-                        if (board.Tetris > totalTetrises)
-                        {
-                            Thread.Sleep(100);
                         }
                     }
 
