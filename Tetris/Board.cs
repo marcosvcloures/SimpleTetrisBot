@@ -9,7 +9,6 @@ namespace Tetris
 {
     public struct Board
     {
-        private static Dictionary<BigInteger, double> memoization = new Dictionary<BigInteger, double>();
         public Tetrominoe? hold = null;
         public int TotalLinesCleared { get; private set; } = 0;
         public int Single { get; private set; } = 0;
@@ -170,7 +169,7 @@ namespace Tetris
 
             Objective += AllClear * 20000;
 
-            Objective += getBoardHeight() * -500;
+            Objective += getBoardHeight() * -50;
 
             Objective += countBlocked() * -2000;
 
@@ -180,7 +179,8 @@ namespace Tetris
 
             Objective += firstColumn() * -500;
 
-            if (hold.HasValue && hold.Value.Shape == Tetrominoe.ShapeType.Line)
+            if (hold.HasValue && 
+                (hold.Value.Shape == Tetrominoe.ShapeType.Line || hold.Value.Shape == Tetrominoe.ShapeType.T))
                 Objective += 10;
 
             return Objective;
@@ -209,7 +209,7 @@ namespace Tetris
                 bool valid = false;
                 int empty = 0;
 
-                for (int j = 1; j < 10; j++)
+                for (int j = 0; j < 10; j++)
                 {
                     if (!matrix[i, j])
                         empty++;
@@ -264,12 +264,12 @@ namespace Tetris
         {
             int count = 0;
 
-            for (int i = 0; i < 22 - 9; i++)
+            for (int i = 0; i < 22 - 10; i++)
             {
                 for (int j = 0; j < 10; j++)
                 {
                     if (matrix[i, j])
-                        count += (22 - 8 - i) * (22 - 8 - i) * (22 - 8 - i);
+                        count += (22 - 9 - i) * (22 - 9 - i) * (22 - 9 - i);
                 }
             }
 

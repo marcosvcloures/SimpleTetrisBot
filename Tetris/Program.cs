@@ -11,6 +11,14 @@ namespace Tetris // Note: actual namespace depends on the project name.
         [DllImport("user32.dll")]
         static extern bool SetForegroundWindow(IntPtr hWnd);
 
+        [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
+        public static extern void mouse_event(uint dwFlags, int dx, int dy, int dwData, int dwExtraInfo);
+
+        private const int MOUSEEVENTF_ABSOLUTE = 0x8000;
+        private const int MOUSEEVENTF_LEFTDOWN = 0x0002;
+        private const int MOUSEEVENTF_LEFTUP = 0x0004;
+        private const int MOUSEEVENTF_MOVE = 0x0001;
+
         static List<Tuple<Color, Tetrominoe>> tetrominoes = new List<Tuple<Color, Tetrominoe>>();
         
         static IntPtr bluestacks = IntPtr.Zero;
@@ -19,7 +27,7 @@ namespace Tetris // Note: actual namespace depends on the project name.
          
         static Random random = new Random(10);
 
-        static Tetrominoe current = new Tetrominoe(ShapeType.Square);
+        static Tetrominoe current = new Tetrominoe(ShapeType.Z);
 
         static bool canHold = true;
 
@@ -60,9 +68,8 @@ namespace Tetris // Note: actual namespace depends on the project name.
             {
                 SetForegroundWindow(bluestacks);
 
-                new WindowsInput.InputSimulator().Keyboard.KeyDown(WindowsInput.Native.VirtualKeyCode.VK_C);
-                Thread.Sleep(20);
-                new WindowsInput.InputSimulator().Keyboard.KeyUp(WindowsInput.Native.VirtualKeyCode.VK_C);
+                // Continuar
+                clickMouseAt(300, 660);
                 Thread.Sleep(600);
 
                 List<Tetrominoe> tetrominoesQueue = new List<Tetrominoe>();
@@ -78,9 +85,9 @@ namespace Tetris // Note: actual namespace depends on the project name.
                 {
                     SetForegroundWindow(bluestacks);
 
-                    Thread.Sleep(300);
+                    var watch = Stopwatch.StartNew();
 
-                    var updateTetrominoesQueue = void () =>
+                    var getNextTask = Task.Run(() =>
                     {
                         nextTetrominoes = getNextTetrominos();
 
@@ -110,9 +117,28 @@ namespace Tetris // Note: actual namespace depends on the project name.
                         tetrominoesQueue.Add(nextTetrominoes.Item3);
 
                         return;
-                    };
+                    });
 
-                    updateTetrominoesQueue();
+                    var moveTask = Task.Run(() =>
+                       movement(board, current, tetrominoesQueue[currentPosition + 1], canHold));
+
+                    getNextTask.Wait();
+                    moveTask.Wait();
+
+                    // the code that you want to measure comes here
+                    watch.Stop();
+
+                    var elapsedMs = watch.ElapsedMilliseconds;
+
+                    int time = 380;
+
+                    if (!canHold)
+                        time = 300;
+
+                    if (elapsedMs < time)
+                        Thread.Sleep(time - (int) elapsedMs);
+
+                    var nextMovement = moveTask.Result;
 
                     Console.WriteLine($"Current: {current.Shape}");
                     Console.WriteLine($"Hold: {board.hold?.Shape}");
@@ -121,8 +147,6 @@ namespace Tetris // Note: actual namespace depends on the project name.
                     for(int i = currentPosition + 1; i < tetrominoesQueue.Count; i++)
                         Console.Write($"{tetrominoesQueue[i].Shape} ");
                     Console.Write("\n");
-
-                    var nextMovement = movement(board, current, tetrominoesQueue[currentPosition + 1], canHold);
 
                     if (nextMovement.Item3)
                     {
@@ -146,10 +170,9 @@ namespace Tetris // Note: actual namespace depends on the project name.
                             current = tetrominoesQueue[currentPosition];
                         }
 
-                        new WindowsInput.InputSimulator().Keyboard.KeyDown(WindowsInput.Native.VirtualKeyCode.VK_W);
+                        // Hold
                         Thread.Sleep(20);
-                        new WindowsInput.InputSimulator().Keyboard.KeyUp(WindowsInput.Native.VirtualKeyCode.VK_W);
-                        Thread.Sleep(20);
+                        clickMouseAt(460, 840);
                     }
                     else
                     {
@@ -182,6 +205,9 @@ namespace Tetris // Note: actual namespace depends on the project name.
                         Console.WriteLine($"movement: place\n{current.Shape}");
                         Console.WriteLine($"rotate: {rotationPresses}, left: {leftPresses}, right: {rightPresses}");
 
+                        int totalSingles = board.Single;
+                        int totalDoubles = board.Double;
+                        int totalTriples = board.Triple;
                         int totalTetrises = board.Tetris;
 
                         board.placeTetrominoe(tetrominoe, nextMovement.Item2);
@@ -192,42 +218,41 @@ namespace Tetris // Note: actual namespace depends on the project name.
 
                         for (int i = 0; i < rotationPresses; i++)
                         {
-                            new WindowsInput.InputSimulator().Keyboard.KeyDown(WindowsInput.Native.VirtualKeyCode.VK_Q);
+                            // Rotate anticlockwise
                             Thread.Sleep(20);
-                            new WindowsInput.InputSimulator().Keyboard.KeyUp(WindowsInput.Native.VirtualKeyCode.VK_Q);
-
-                            Thread.Sleep(20);
+                            clickMouseAt(420, 910);
                         }
 
                         for (int i = 0; i < leftPresses; i++)
                         {
-                            new WindowsInput.InputSimulator().Keyboard.KeyDown(WindowsInput.Native.VirtualKeyCode.VK_A);
+                            // Move left
                             Thread.Sleep(20);
-                            new WindowsInput.InputSimulator().Keyboard.KeyUp(WindowsInput.Native.VirtualKeyCode.VK_A);
-
-                            Thread.Sleep(20);
+                            clickMouseAt(50, 910);
                         }
 
                         for (int i = 0; i < rightPresses; i++)
                         {
-                            new WindowsInput.InputSimulator().Keyboard.KeyDown(WindowsInput.Native.VirtualKeyCode.VK_D);
+                            // Move right
                             Thread.Sleep(20);
-                            new WindowsInput.InputSimulator().Keyboard.KeyUp(WindowsInput.Native.VirtualKeyCode.VK_D);
-
-                            Thread.Sleep(20);
+                            clickMouseAt(160, 910);
                         }
 
-                        new WindowsInput.InputSimulator().Keyboard.KeyDown(WindowsInput.Native.VirtualKeyCode.SPACE);
                         Thread.Sleep(20);
-                        new WindowsInput.InputSimulator().Keyboard.KeyUp(WindowsInput.Native.VirtualKeyCode.SPACE);
-
-                        Thread.Sleep(20);
+                        clickMouseAt(110, 850);
 
                         //Console.WriteLine(board.ToString());
 
+                        // Wait for animations to take place
+                        if (board.Single > totalSingles ||
+                            board.Double > totalDoubles ||
+                            board.Triple > totalTriples)
+                        {
+                            Thread.Sleep(50);
+                        }
+
                         if (board.Tetris > totalTetrises)
                         {
-                            Thread.Sleep(200);
+                            Thread.Sleep(100);
                         }
                     }
 
@@ -235,6 +260,12 @@ namespace Tetris // Note: actual namespace depends on the project name.
                     //PostMessage(bluestacks, 0x104, 0x43, 0);
                 }
             }
+        }
+
+        private static void clickMouseAt(int X, int Y)
+        {
+            mouse_event(MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE, X * 65535 / 1920, Y * 65535 / 1080, 0, 0);
+            mouse_event(MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP, X * 65535 / 1920, Y * 65535 / 1080, 0, 0);
         }
 
         static Tuple<double, int, bool, Rotation> movement(Board board, Tetrominoe tetrominoe, Tetrominoe? next, bool canSwap)
@@ -268,15 +299,16 @@ namespace Tetris // Note: actual namespace depends on the project name.
                         newFO = movement(tempBoard, next.Value, null, true).Item1;
                     }
 
-                    lock (mutex)
+                    if (newFO > bestFO)
                     {
-                        if (newFO > bestFO)
+                        lock (mutex)
                         {
-                            //Console.WriteLine($"Place { tempTetrominoe.Shape } at { j }: { newFO }");
-
-                            bestFO = newFO;
-                            bestRotation = (Rotation)rotation;
-                            bestColumn = j;
+                            if (newFO > bestFO)
+                            {
+                                bestFO = newFO;
+                                bestRotation = (Rotation)rotation;
+                                bestColumn = j;
+                            }
                         }
                     }
                 });
